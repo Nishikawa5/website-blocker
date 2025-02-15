@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Oops! No Distractions!</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .countdown {
+            font-size: 120px;
+            color: #ff4081;
+            text-shadow: 0 0 20px #ff4081;
+            margin: 20px;
+            font-weight: bold;
+        }
+
+        .message {
+            font-size: 24px;
+            margin: 20px;
+            opacity: 0.8;
+        }
+
+        .nope {
+            font-size: 48px;
+            margin: 20px;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .cat {
+            font-size: 100px;
+            margin: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nope">WHAT ARE YOU DOING? 🤨</div>
+        <div class="message">Redirecting you in...</div>
+        <div class="countdown" id="countdown">5</div>
+        <div class="cat">😺</div>
+        <div class="message">You need to lock in frfr</div>
+    </div>
+    <script src="blocked.js" defer></script>
+</body>
+</html>

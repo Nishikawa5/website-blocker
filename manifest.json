@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Website Blocker",
+  "version": "1.0",
+  "description": "A simple website blocker.",
+  "permissions": [
+    "storage",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": [{
+    "resources": [
+      "blocked.html",
+      "blocked.js",
+      "images/*",
+      "images-list.json"
+    ],
+    "matches": ["<all_urls>"]
+  }]
+}
