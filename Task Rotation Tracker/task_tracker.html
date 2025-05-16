@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Rotation Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        /* Today's stats panel */
+        .stats-panel {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .stats-count {
+            background-color: #3498db;
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            min-width: 30px;
+            text-align: center;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        #task-input, #description-input, #group-input, #new-group-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #add-button {
+            margin-left: 10px;
+        }
+        
+        /* Task and Group Styles */
+        #task-container {
+            margin-top: 20px;
+        }
+        .group-container {
+            margin-bottom: 30px;
+            border: 1px solid #e3e3e3;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .group-header {
+            background-color: #34495e;
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .group-tasks {
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        #task-list, .task-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .task-item {
+            background-color: #f9f9f9;
+            margin-bottom: 12px;
+            margin-left: 15px;
+            border-radius: 4px;
+            border-left: 5px solid #bdc3c7; /* Default color for no priority */
+            overflow: visible;
+            position: relative;
+        }
+        /* Priority Colors */
+        .priority-none {
+            border-left-color: #bdc3c7;
+        }
+        .priority-low {
+            border-left-color: #3498db;
+        }
+        .priority-medium {
+            border-left-color: #f39c12;
+        }
+        .priority-high {
+            border-left-color: #e74c3c;
+        }
+        .ungrouped-header {
+            background-color: #7f8c8d;
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .completion-badge {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #16a085;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 12px 12px 45px;
+            cursor: pointer;
+        }
+        .task-info {
+            flex-grow: 1;
+        }
+        .task-name {
+            font-weight: bold;
+        }
+        .task-stats {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        .task-description {
+            padding: 0 12px 12px 12px;
+            background-color: #eef5f9;
+            display: none;
+            border-top: 1px solid #e3e3e3;
+        }
+        .visible {
+            display: block;
+        }
+        .button-group {
+            display: flex;
+            gap: 5px;
+        }
+        .done-button {
+            background-color: #2ecc71;
+        }
+        .done-button:hover {
+            background-color: #27ae60;
+        }
+        .edit-button {
+            background-color: #f39c12;
+        }
+        .edit-button:hover {
+            background-color: #d35400;
+        }
+        .remove-button {
+            background-color: #e74c3c;
+        }
+        .remove-button:hover {
+            background-color: #c0392b;
+        }
+        .group-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .clear-all, .add-group-btn, .export-import-btn {
+            display: block;
+            margin: 20px auto;
+        }
+        .add-group-btn {
+            background-color: #9b59b6;
+        }
+        .add-group-btn:hover {
+            background-color: #8e44ad;
+        }
+        .clear-all {
+            background-color: #e74c3c;
+        }
+        .clear-all:hover {
+            background-color: #c0392b;
+        }
+        .export-import-btn {
+            background-color: #2ecc71;
+        }
+        .export-import-btn:hover {
+            background-color: #27ae60;
+        }
+        .form-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e3e3e3;
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .form-title {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .add-group-btn {
+            background-color: #9b59b6;
+            margin: 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 80%;
+            max-width: 500px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .description-label, .group-label, .priority-label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .group-container.collapsed .group-tasks {
+            display: none;
+        }
+        .group-icon {
+            margin-left: 5px;
+        }
+        .new-group-form {
+            margin-top: 15px;
+            display: none;
+        }
+        .show {
+            display: block;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .form-row > * {
+            flex: 1;
+        }
+        /* Priority tag styles */
+        .priority-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+        .priority-tag.none {
+            background-color: #bdc3c7;
+            color: #2c3e50;
+        }
+        .priority-tag.low {
+            background-color: #3498db;
+            color: white;
+        }
+        .priority-tag.medium {
+            background-color: #f39c12;
+            color: white;
+        }
+        .priority-tag.high {
+            background-color: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Task Rotation Tracker</h1>
+    
+    <!-- Today's stats panel -->
+    <div class="stats-panel">
+        <div class="stats-title">Tasks Completed Today</div>
+        <div id="today-count" class="stats-count">0</div>
+    </div>
+    
+    <div class="form-section">
+        <div class="header-section">
+            <div class="form-title">Add New Task</div>
+            <button class="add-group-btn" id="manage-groups-btn">Manage Groups</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="task-input" placeholder="Enter a new task...">
+            <button id="add-button">Add</button>
+        </div>
+        <div class="form-row">
+            <div>
+                <label class="group-label" for="group-select">Group:</label>
+                <select id="group-select">
+                    <option value="">-- Select Group --</option>
+                </select>
+            </div>
+            <div>
+                <label class="priority-label" for="priority-select">Priority:</label>
+                <select id="priority-select">
+                    <option value="none">None</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+        </div>
+        <textarea id="description-input" placeholder="Optional description..." rows="2"></textarea>
+    </div>
+    
+    <div id="task-container">
+        <!-- Groups and tasks will be rendered here -->
+    </div>
+    
+    <!-- Export/Import Buttons -->
+    <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+        <button class="export-import-btn" style="background-color: #2ecc71; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;" onclick="exportData()">Export Data</button>
+        <button class="export-import-btn" style="background-color: #2ecc71; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;" onclick="importData()">Import Data</button>
+    </div>
+    
+    <button class="clear-all" id="clear-button">Clear All Tasks</button>
+    
+    <!-- Export/Import Modal -->
+    <div id="data-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.3); width: 80%; max-width: 500px;">
+            <h2 id="modal-title">Export Data</h2>
+            <p id="modal-instruction">Copy the JSON data below to save your tasks and groups:</p>
+            <textarea id="modal-data" rows="10" style="width: 100%; margin: 10px 0;"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button id="copy-btn" style="background-color: #3498db; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; display: none;">Copy to Clipboard</button>
+                <button id="apply-btn" style="background-color: #2ecc71; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; display: none;">Apply Import</button>
+                <button id="close-btn" style="background-color: #95a5a6; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;">Close</button>
+            </div>
+        </div>
+    </div>
+        
+    <!-- Edit Task Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Task</h2>
+            <input type="text" id="edit-task-input" placeholder="Task name">
+            
+            <div class="form-row">
+                <div>
+                    <label class="group-label" for="edit-group-select">Group:</label>
+                    <select id="edit-group-select">
+                        <option value="">-- No Group --</option>
+                        <option value="new-group">+ Create New Group</option>
+                    </select>
+                    <div class="new-group-form" id="edit-new-group-form">
+                        <input type="text" id="edit-new-group-input" placeholder="Enter new group name...">
+                    </div>
+                </div>
+                <div>
+                    <label class="priority-label" for="edit-priority-select">Priority:</label>
+                    <select id="edit-priority-select">
+                        <option value="none">None</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+            
+            <label class="description-label" for="edit-description-input">Description:</label>
+            <textarea id="edit-description-input" placeholder="Description" rows="3"></textarea>
+            
+            <div class="modal-buttons">
+                <button id="cancel-edit">Cancel</button>
+                <button id="save-edit">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Manage Groups Modal -->
+    <div id="groups-modal" class="modal">
+        <div class="modal-content">
+            <h2>Manage Groups</h2>
+            <ul id="group-list" class="task-list">
+                <!-- Groups will be listed here -->
+            </ul>
+            <div class="input-group" style="margin-top: 15px;">
+                <input type="text" id="add-group-input" placeholder="New group name...">
+                <button id="add-group-button">Add</button>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-groups">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize data from localStorage or empty arrays
+        let tasks = JSON.parse(localStorage.getItem('rotationTasks')) || [];
+        let groups = JSON.parse(localStorage.getItem('taskGroups')) || [];
+        let currentEditIndex = -1;
+        
+        // Add group property, completionCount, and priority if they don't exist
+        tasks.forEach(task => {
+            if (task.completionCount === undefined) {
+                task.completionCount = 0;
+            }
+            if (task.group === undefined) {
+                task.group = "";
+            }
+            if (task.priority === undefined) {
+                task.priority = "none";
+            }
+        });
+        
+        // DOM elements
+        const taskInput = document.getElementById('task-input');
+        const descriptionInput = document.getElementById('description-input');
+        const groupSelect = document.getElementById('group-select');
+        const prioritySelect = document.getElementById('priority-select');
+        const newGroupForm = document.getElementById('new-group-form');
+        const newGroupInput = document.getElementById('new-group-input');
+        const addButton = document.getElementById('add-button');
+        const taskContainer = document.getElementById('task-container');
+        const clearButton = document.getElementById('clear-button');
+        const manageGroupsBtn = document.getElementById('manage-groups-btn');
+        
+        // Modal elements
+        const editModal = document.getElementById('edit-modal');
+        const editTaskInput = document.getElementById('edit-task-input');
+        const editGroupSelect = document.getElementById('edit-group-select');
+        const editPrioritySelect = document.getElementById('edit-priority-select');
+        const editNewGroupForm = document.getElementById('edit-new-group-form');
+        const editNewGroupInput = document.getElementById('edit-new-group-input');
+        const editDescriptionInput = document.getElementById('edit-description-input');
+        const cancelEditButton = document.getElementById('cancel-edit');
+        const saveEditButton = document.getElementById('save-edit');
+        
+        // Groups modal elements
+        const groupsModal = document.getElementById('groups-modal');
+        const groupList = document.getElementById('group-list');
+        const addGroupInput = document.getElementById('add-group-input');
+        const addGroupButton = document.getElementById('add-group-button');
+        const closeGroupsButton = document.getElementById('close-groups');
+        
+        // Function to save data to localStorage
+        function saveData() {
+            localStorage.setItem('rotationTasks', JSON.stringify(tasks));
+            localStorage.setItem('taskGroups', JSON.stringify(groups));
+        }
+        
+        // Function to populate group selects
+        function populateGroupSelects() {
+            // Clear existing options except the default
+            while (groupSelect.options.length > 1) {
+                groupSelect.remove(1);
+            }
+            while (editGroupSelect.options.length > 2) {
+                editGroupSelect.remove(1);
+            }
+            
+            // Add current groups to both selects
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group;
+                option.textContent = group;
+                groupSelect.appendChild(option);
+                
+                const editOption = document.createElement('option');
+                editOption.value = group;
+                editOption.textContent = group;
+                editGroupSelect.insertBefore(editOption, editGroupSelect.options[editGroupSelect.options.length - 1]);
+            });
+        }
+        
+        // Function to render tasks grouped by category
+        function renderTasks() {
+            taskContainer.innerHTML = '';
+            
+            // First, render grouped tasks
+            const groupedTasks = {};
+            groups.forEach(group => {
+                groupedTasks[group] = [];
+            });
+            
+            // Collect tasks into their respective groups
+            tasks.forEach(task => {
+                if (task.group && groups.includes(task.group)) {
+                    if (!groupedTasks[task.group]) {
+                        groupedTasks[task.group] = [];
+                    }
+                    groupedTasks[task.group].push(task);
+                }
+            });
+            
+            // Render each group with its tasks
+            Object.keys(groupedTasks).forEach(groupName => {
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'group-container';
+                
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'group-header';
+                groupHeader.innerHTML = `
+                    <span>${groupName}</span>
+                    <span class="group-icon">▼</span>
+                `;
+                
+                const groupTasks = document.createElement('div');
+                groupTasks.className = 'group-tasks';
+                
+                const taskList = document.createElement('ul');
+                taskList.className = 'task-list';
+                
+                // Add tasks to this group
+                groupedTasks[groupName].forEach(task => {
+                    const taskElement = createTaskElement(task);
+                    taskList.appendChild(taskElement);
+                });
+                
+                groupTasks.appendChild(taskList);
+                groupContainer.appendChild(groupHeader);
+                groupContainer.appendChild(groupTasks);
+                
+                // Toggle group collapse
+                groupHeader.addEventListener('click', () => {
+                    groupContainer.classList.toggle('collapsed');
+                    const icon = groupHeader.querySelector('.group-icon');
+                    icon.textContent = groupContainer.classList.contains('collapsed') ? '▶' : '▼';
+                });
+                
+                taskContainer.appendChild(groupContainer);
+            });
+            
+            // Now handle ungrouped tasks
+            const ungroupedTasks = tasks.filter(task => !task.group || !groups.includes(task.group));
+            
+            if (ungroupedTasks.length > 0) {
+                const ungroupedContainer = document.createElement('div');
+                ungroupedContainer.className = 'ungrouped-container';
+                
+                const ungroupedHeader = document.createElement('div');
+                ungroupedHeader.className = 'ungrouped-header';
+                ungroupedHeader.textContent = 'Ungrouped Tasks';
+                
+                const ungroupedList = document.createElement('ul');
+                ungroupedList.className = 'task-list';
+                ungroupedList.id = 'task-list';
+                
+                ungroupedTasks.forEach(task => {
+                    const taskElement = createTaskElement(task);
+                    ungroupedList.appendChild(taskElement);
+                });
+                
+                ungroupedContainer.appendChild(ungroupedHeader);
+                ungroupedContainer.appendChild(ungroupedList);
+                
+                taskContainer.appendChild(ungroupedContainer);
+            }
+        }
+        
+        // Helper function to create a task element
+        function createTaskElement(task) {
+            const taskIndex = tasks.indexOf(task);
+            
+            const li = document.createElement('li');
+            li.className = `task-item priority-${task.priority || 'none'}`;
+            
+            // Create completion badge
+            const completionBadge = document.createElement('div');
+            completionBadge.className = 'completion-badge';
+            completionBadge.textContent = task.completionCount || 0;
+            li.appendChild(completionBadge);
+            
+            // Create task header (always visible)
+            const taskHeader = document.createElement('div');
+            taskHeader.className = 'task-header';
+            
+            const taskInfo = document.createElement('div');
+            taskInfo.className = 'task-info';
+            
+            const taskName = document.createElement('div');
+            taskName.className = 'task-name';
+            taskName.innerHTML = `${task.name}`;
+
+            // Add priority tag next to task name
+            if (task.priority && task.priority !== 'none') {
+                const priorityTag = document.createElement('span');
+                priorityTag.className = `priority-tag ${task.priority}`;
+                priorityTag.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+                taskName.appendChild(priorityTag);
+            }
+            
+            const taskStats = document.createElement('div');
+            taskStats.className = 'task-stats';
+            
+            const taskDate = document.createElement('div');
+            taskDate.className = 'task-date';
+            if (task.lastDone) {
+                const date = new Date(task.lastDone);
+                taskDate.textContent = `Last done: ${date.toLocaleDateString()}`;
+            } else {
+                taskDate.textContent = 'Never done';
+            }
+            
+            taskStats.appendChild(taskDate);
+            taskInfo.appendChild(taskName);
+            taskInfo.appendChild(taskStats);
+            
+            // Button group
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'button-group';
+            
+            const doneButton = document.createElement('button');
+            doneButton.className = 'done-button';
+            doneButton.textContent = 'Done';
+            doneButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                markAsDone(taskIndex);
+            });
+            
+            const editButton = document.createElement('button');
+            editButton.className = 'edit-button';
+            editButton.textContent = 'Edit';
+            editButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openEditModal(taskIndex);
+            });
+            
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-button';
+            removeButton.textContent = 'Remove';
+            removeButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeTask(taskIndex);
+            });
+            
+            buttonGroup.appendChild(doneButton);
+            buttonGroup.appendChild(editButton);
+            buttonGroup.appendChild(removeButton);
+            
+            taskHeader.appendChild(taskInfo);
+            taskHeader.appendChild(buttonGroup);
+            
+            // Create description section (toggleable)
+            const taskDescription = document.createElement('div');
+            taskDescription.className = 'task-description';
+            if (task.description) {
+                taskDescription.textContent = task.description;
+            } else {
+                taskDescription.textContent = 'No description provided.';
+                taskDescription.style.fontStyle = 'italic';
+                taskDescription.style.color = '#95a5a6';
+            }
+            
+            // Toggle description visibility when clicking on the task header
+            taskHeader.addEventListener('click', () => {
+                taskDescription.classList.toggle('visible');
+            });
+            
+            li.appendChild(taskHeader);
+            li.appendChild(taskDescription);
+            
+            return li;
+        }
+        
+        // Function to render group management list
+        function renderGroupList() {
+            groupList.innerHTML = '';
+            
+            groups.forEach((group, index) => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'task-header';
+                
+                const groupName = document.createElement('div');
+                groupName.className = 'task-name';
+                groupName.textContent = group;
+                
+                const buttonGroup = document.createElement('div');
+                buttonGroup.className = 'button-group';
+                
+                const editButton = document.createElement('button');
+                editButton.className = 'edit-button';
+                editButton.textContent = 'Rename';
+                editButton.addEventListener('click', () => {
+                    const newName = prompt('Enter new name for group:', group);
+                    if (newName && newName.trim() !== '') {
+                        renameGroup(group, newName.trim());
+                    }
+                });
+                
+                const removeButton = document.createElement('button');
+                removeButton.className = 'remove-button';
+                removeButton.textContent = 'Remove';
+                removeButton.addEventListener('click', () => {
+                    if (confirm(`Are you sure you want to remove the group "${group}"?\nTasks in this group will become ungrouped.`)) {
+                        removeGroup(index);
+                    }
+                });
+                
+                buttonGroup.appendChild(editButton);
+                buttonGroup.appendChild(removeButton);
+                
+                groupHeader.appendChild(groupName);
+                groupHeader.appendChild(buttonGroup);
+                
+                li.appendChild(groupHeader);
+                groupList.appendChild(li);
+            });
+        }
+        
+        // Function to add a new task
+        function addTask() {
+            const taskName = taskInput.value.trim();
+            const description = descriptionInput.value.trim();
+            let groupName = groupSelect.value;
+            let priority = prioritySelect.value;
+            
+            if (taskName) {
+                tasks.unshift({
+                    name: taskName,
+                    description: description,
+                    lastDone: null,
+                    completionCount: 0,
+                    group: groupName,
+                    priority: priority
+                });
+                
+                // Reset form
+                taskInput.value = '';
+                descriptionInput.value = '';
+                groupSelect.value = '';
+                prioritySelect.value = 'none';
+                
+                saveData();
+                renderTasks();
+            }
+        }
+        
+        // Function to mark a task as done
+        function markAsDone(index) {
+            const task = tasks[index];
+            task.lastDone = new Date().toISOString();
+            task.completionCount = (task.completionCount || 0) + 1;
+            
+            // Increment today's completion count
+            todayStats.count++;
+            document.getElementById('today-count').textContent = todayStats.count;
+            localStorage.setItem('todayStats', JSON.stringify(todayStats));
+            
+            // Remove the task from its current position
+            tasks.splice(index, 1);
+            // Add it back at the end of the queue
+            tasks.push(task);
+            
+            saveData();
+            renderTasks();
+        }
+        
+        // Function to remove a task
+        function removeTask(index) {
+            if (confirm('Are you sure you want to remove this task?')) {
+                tasks.splice(index, 1);
+                saveData();
+                renderTasks();
+            }
+        }
+        
+        // Function to clear all tasks
+        function clearAllTasks() {
+            if (confirm('Are you sure you want to clear all tasks?')) {
+                tasks = [];
+                saveData();
+                renderTasks();
+            }
+        }
+        
+        // Function to add a new group
+        function addGroup() {
+            const groupName = addGroupInput.value.trim();
+            
+            if (groupName && !groups.includes(groupName)) {
+                groups.push(groupName);
+                addGroupInput.value = '';
+                saveData();
+                populateGroupSelects();
+                renderGroupList();
+                renderTasks();
+            }
+        }
+        
+        // Function to remove a group
+        function removeGroup(index) {
+            const groupName = groups[index];
+            
+            // Update all tasks that were in this group
+            tasks.forEach(task => {
+                if (task.group === groupName) {
+                    task.group = '';
+                }
+            });
+            
+            // Remove the group
+            groups.splice(index, 1);
+            
+            saveData();
+            populateGroupSelects();
+            renderGroupList();
+            renderTasks();
+        }
+        
+        // Function to rename a group
+        function renameGroup(oldName, newName) {
+            if (groups.includes(newName)) {
+                alert('A group with this name already exists.');
+                return;
+            }
+            
+            // Update the group name in the groups array
+            const index = groups.indexOf(oldName);
+            if (index !== -1) {
+                groups[index] = newName;
+            }
+            
+            // Update all tasks that were in this group
+            tasks.forEach(task => {
+                if (task.group === oldName) {
+                    task.group = newName;
+                }
+            });
+            
+            saveData();
+            populateGroupSelects();
+            renderGroupList();
+            renderTasks();
+        }
+        
+        // Functions for editing tasks
+        function openEditModal(index) {
+            currentEditIndex = index;
+            const task = tasks[index];
+            
+            editTaskInput.value = task.name;
+            editDescriptionInput.value = task.description || '';
+            editGroupSelect.value = task.group || '';
+            editPrioritySelect.value = task.priority || 'none';
+            
+            if (editGroupSelect.value === 'new-group') {
+                editNewGroupForm.classList.add('show');
+            } else {
+                editNewGroupForm.classList.remove('show');
+            }
+            
+            editModal.style.display = 'flex';
+        }
+        
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            currentEditIndex = -1;
+        }
+        
+        function saveEdit() {
+            const taskName = editTaskInput.value.trim();
+            const description = editDescriptionInput.value.trim();
+            let groupName = editGroupSelect.value;
+            let priority = editPrioritySelect.value;
+            
+            // Handle new group creation
+            if (groupName === 'new-group') {
+                groupName = editNewGroupInput.value.trim();
+                if (groupName && !groups.includes(groupName)) {
+                    groups.push(groupName);
+                }
+            }
+            
+            if (taskName && currentEditIndex !== -1) {
+                tasks[currentEditIndex].name = taskName;
+                tasks[currentEditIndex].description = description;
+                tasks[currentEditIndex].group = groupName;
+                tasks[currentEditIndex].priority = priority;
+                
+                saveData();
+                populateGroupSelects();
+                renderTasks();
+                closeEditModal();
+            }
+        }
+        
+        // Function to open the groups modal
+        function openGroupsModal() {
+            renderGroupList();
+            groupsModal.style.display = 'flex';
+        }
+        
+        function closeGroupsModal() {
+            groupsModal.style.display = 'none';
+        }
+        
+        // Export/Import functions
+        // Close modal function declaration
+        function closeModal() {
+            document.getElementById('data-modal').style.display = 'none';
+        }
+
+
+        // Export functionality
+        function exportData() {
+            // Get your tasks and groups data
+            const data = {
+                tasks: tasks, // Assuming 'tasks' is your main tasks array
+                groups: groups // Assuming 'groups' is your groups array
+            };
+            
+            // Set up the modal for export
+            document.getElementById('modal-title').textContent = 'Export Data';
+            document.getElementById('modal-instruction').textContent = 'Copy the JSON data below to save your tasks and groups:';
+            document.getElementById('modal-data').value = JSON.stringify(data, null, 2);
+            document.getElementById('modal-data').readOnly = true;
+            
+            // Show/hide buttons
+            document.getElementById('copy-btn').style.display = 'block';
+            document.getElementById('apply-btn').style.display = 'none';
+            
+            // Show the modal
+            document.getElementById('data-modal').style.display = 'flex';
+            
+            // Set up event listeners
+            document.getElementById('copy-btn').onclick = copyToClipboard;
+            document.getElementById('close-btn').onclick = closeModal;
+        }
+
+        // Import functionality
+        function importData() {
+            // Set up the modal for import
+            document.getElementById('modal-title').textContent = 'Import Data';
+            document.getElementById('modal-instruction').textContent = 'Paste your JSON data below to load your tasks and groups:';
+            document.getElementById('modal-data').value = '';
+            document.getElementById('modal-data').readOnly = false;
+            
+            // Show/hide buttons
+            document.getElementById('copy-btn').style.display = 'none';
+            document.getElementById('apply-btn').style.display = 'block';
+            
+            // Show the modal
+            document.getElementById('data-modal').style.display = 'flex';
+            
+            // Set up event listeners
+            document.getElementById('apply-btn').onclick = applyImport;
+            document.getElementById('close-btn').onclick = closeModal;
+        }
+
+        // Copy to clipboard function
+        async function copyToClipboard() {
+            try {
+                const textArea = document.getElementById('modal-data');
+                
+                // Try modern Clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(textArea.value);
+                    alert('Data copied to clipboard!');
+                } else {
+                    // Fallback to older method
+                    textArea.select();
+                    const success = document.execCommand('copy');
+                    if (success) {
+                        alert('Data copied to clipboard!');
+                    } else {
+                        throw new Error('Copy command failed');
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                alert('Could not copy automatically. Please select all text (Ctrl+A) and copy manually (Ctrl+C).');
+            }
+        }
+
+        // Apply imported data
+        function applyImport() {
+            try {
+                const importData = JSON.parse(document.getElementById('modal-data').value);
+                
+                if (importData && importData.tasks && Array.isArray(importData.tasks) && 
+                    importData.groups && Array.isArray(importData.groups)) {
+                    
+                    if (confirm('This will replace your current tasks and groups. Continue?')) {
+                        // Apply imported data
+                        tasks = importData.tasks;
+                        groups = importData.groups;
+                        
+                        // Add missing properties to tasks if needed
+                        tasks.forEach(task => {
+                            if (task.completionCount === undefined) task.completionCount = 0;
+                            if (task.group === undefined) task.group = "";
+                            if (task.priority === undefined) task.priority = "none";
+                        });
+                        
+                        // Save to localStorage and update UI
+                        localStorage.setItem('rotationTasks', JSON.stringify(tasks));
+                        localStorage.setItem('taskGroups', JSON.stringify(groups));
+                        
+                        // Refresh UI (replace with your UI update functions)
+                        if (typeof populateGroupSelects === 'function') populateGroupSelects();
+                        if (typeof renderTasks === 'function') renderTasks();
+                        
+                        closeModal();
+                        alert('Data imported successfully!');
+                    }
+                } else {
+                    alert('Invalid data format. Import failed. The data must contain both tasks and groups arrays.');
+                }
+            } catch (error) {
+                alert('Error parsing JSON data: ' + error.message);
+            }
+        }
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        // Event listeners
+        addButton.addEventListener('click', addTask);
+        
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+        
+        clearButton.addEventListener('click', clearAllTasks);
+        
+        // Group select change handler for edit modal
+        editGroupSelect.addEventListener('change', function() {
+            if (this.value === 'new-group') {
+                editNewGroupForm.classList.add('show');
+            } else {
+                editNewGroupForm.classList.remove('show');
+            }
+        });
+        
+        // Edit modal buttons
+        cancelEditButton.addEventListener('click', closeEditModal);
+        saveEditButton.addEventListener('click', saveEdit);
+        
+        // Group management
+        manageGroupsBtn.addEventListener('click', openGroupsModal);
+        addGroupButton.addEventListener('click', addGroup);
+        closeGroupsButton.addEventListener('click', closeGroupsModal);
+        
+        // Group input enter key
+        addGroupInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addGroup();
+        });
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+            if (e.target === groupsModal) {
+                closeGroupsModal();
+            }
+            if (event.target === document.getElementById('data-modal')) {
+                closeModal();
+            }
+        });
+        
+
+        // Initialize app
+        populateGroupSelects();
+        renderTasks();
+    </script>
+</body>
+</html>
