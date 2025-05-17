@@ -452,7 +452,24 @@
         let tasks = JSON.parse(localStorage.getItem('rotationTasks')) || [];
         let groups = JSON.parse(localStorage.getItem('taskGroups')) || [];
         let currentEditIndex = -1;
-        
+
+
+        let todayStats = JSON.parse(localStorage.getItem('todayStats')) || {
+            date: new Date().toDateString(),
+            count: 0
+        };        
+        // Check if the stored date is today
+        const today = new Date().toDateString();
+        if (todayStats.date !== today) {
+            // It's a new day, reset the counter
+            todayStats = {
+                date: today,
+                count: 0
+            };
+            localStorage.setItem('todayStats', JSON.stringify(todayStats));
+        }
+
+
         // Add group property, completionCount, and priority if they don't exist
         tasks.forEach(task => {
             if (task.completionCount === undefined) {
@@ -800,7 +817,10 @@
             
             // Increment today's completion count
             todayStats.count++;
-            document.getElementById('today-count').textContent = todayStats.count;
+            const todayCountElement = document.getElementById('today-count');
+            if (todayCountElement) {
+                todayCountElement.textContent = todayStats.count;
+            }
             localStorage.setItem('todayStats', JSON.stringify(todayStats));
             
             // Remove the task from its current position
@@ -1120,7 +1140,7 @@
             if (e.target === groupsModal) {
                 closeGroupsModal();
             }
-            if (event.target === document.getElementById('data-modal')) {
+            if (e.target === document.getElementById('data-modal')) {
                 closeModal();
             }
         });
