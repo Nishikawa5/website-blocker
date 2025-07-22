@@ -64,6 +64,10 @@
         button:hover {
             background-color: #2980b9;
         }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
         #add-button {
             margin-left: 10px;
         }
@@ -194,6 +198,14 @@
         }
         .remove-button:hover {
             background-color: #c0392b;
+        }
+        .move-button {
+            background-color: #1abc9c;
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+        .move-button:hover {
+            background-color: #16a085;
         }
         .group-actions {
             display: flex;
@@ -373,24 +385,10 @@
     <!-- Export/Import Buttons -->
     <div style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
         <button class="export-import-btn" style="background-color: #2ecc71; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;" onclick="exportData()">Export Data</button>
-        <button class="export-import-btn" style="background-color: #2ecc71; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;" onclick="importData()">Import Data</button>
+        <button class="export-import-btn" style="background-color: #3498db; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;" onclick="importData()">Import Data</button>
     </div>
     
     <button class="clear-all" id="clear-button">Clear All Tasks</button>
-    
-    <!-- Export/Import Modal -->
-    <div id="data-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background-color: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.3); width: 80%; max-width: 500px;">
-            <h2 id="modal-title">Export Data</h2>
-            <p id="modal-instruction">Copy the JSON data below to save your tasks and groups:</p>
-            <textarea id="modal-data" rows="10" style="width: 100%; margin: 10px 0;"></textarea>
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-                <button id="copy-btn" style="background-color: #3498db; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; display: none;">Copy to Clipboard</button>
-                <button id="apply-btn" style="background-color: #2ecc71; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; display: none;">Apply Import</button>
-                <button id="close-btn" style="background-color: #95a5a6; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px;">Close</button>
-            </div>
-        </div>
-    </div>
         
     <!-- Edit Task Modal -->
     <div id="edit-modal" class="modal">
@@ -547,24 +545,25 @@
         function renderTasks() {
             taskContainer.innerHTML = '';
             
-            // First, render grouped tasks
-            const groupedTasks = {};
+            const taskGroups = {};
+            // Initialize an object with group names as keys from the ordered groups array
             groups.forEach(group => {
-                groupedTasks[group] = [];
+                taskGroups[group] = [];
             });
-            
-            // Collect tasks into their respective groups
+
+            const ungroupedTasks = [];
+
+            // Distribute tasks into the appropriate group or the ungrouped list
             tasks.forEach(task => {
                 if (task.group && groups.includes(task.group)) {
-                    if (!groupedTasks[task.group]) {
-                        groupedTasks[task.group] = [];
-                    }
-                    groupedTasks[task.group].push(task);
+                    taskGroups[task.group].push(task);
+                } else {
+                    ungroupedTasks.push(task);
                 }
             });
-            
-            // Render each group with its tasks
-            Object.keys(groupedTasks).forEach(groupName => {
+
+            // Render groups in the order defined by the `groups` array
+            groups.forEach(groupName => {
                 const groupContainer = document.createElement('div');
                 groupContainer.className = 'group-container';
                 
@@ -582,7 +581,7 @@
                 taskList.className = 'task-list';
                 
                 // Add tasks to this group
-                groupedTasks[groupName].forEach(task => {
+                taskGroups[groupName].forEach(task => {
                     const taskElement = createTaskElement(task);
                     taskList.appendChild(taskElement);
                 });
@@ -601,9 +600,7 @@
                 taskContainer.appendChild(groupContainer);
             });
             
-            // Now handle ungrouped tasks
-            const ungroupedTasks = tasks.filter(task => !task.group || !groups.includes(task.group));
-            
+            // Render ungrouped tasks at the end
             if (ungroupedTasks.length > 0) {
                 const ungroupedContainer = document.createElement('div');
                 ungroupedContainer.className = 'ungrouped-container';
@@ -750,6 +747,24 @@
                 
                 const buttonGroup = document.createElement('div');
                 buttonGroup.className = 'button-group';
+
+                // Move Up Button
+                const moveUpButton = document.createElement('button');
+                moveUpButton.className = 'move-button';
+                moveUpButton.textContent = '↑';
+                moveUpButton.addEventListener('click', () => moveGroup(index, 'up'));
+                if (index === 0) {
+                    moveUpButton.disabled = true;
+                }
+
+                // Move Down Button
+                const moveDownButton = document.createElement('button');
+                moveDownButton.className = 'move-button';
+                moveDownButton.textContent = '↓';
+                moveDownButton.addEventListener('click', () => moveGroup(index, 'down'));
+                if (index === groups.length - 1) {
+                    moveDownButton.disabled = true;
+                }
                 
                 const editButton = document.createElement('button');
                 editButton.className = 'edit-button';
@@ -770,6 +785,8 @@
                     }
                 });
                 
+                buttonGroup.appendChild(moveUpButton);
+                buttonGroup.appendChild(moveDownButton);
                 buttonGroup.appendChild(editButton);
                 buttonGroup.appendChild(removeButton);
                 
@@ -862,6 +879,20 @@
                 renderGroupList();
                 renderTasks();
             }
+        }
+
+        // Function to move a group up or down
+        function moveGroup(index, direction) {
+            if (direction === 'up' && index > 0) {
+                // Swap with the previous element
+                [groups[index], groups[index - 1]] = [groups[index - 1], groups[index]];
+            } else if (direction === 'down' && index < groups.length - 1) {
+                // Swap with the next element
+                [groups[index], groups[index + 1]] = [groups[index + 1], groups[index]];
+            }
+            saveData();
+            renderGroupList(); // Re-render the list in the modal
+            renderTasks(); // Re-render the main task view to reflect the new order
         }
         
         // Function to remove a group
@@ -972,133 +1003,66 @@
         }
         
         // Export/Import functions
-        // Close modal function declaration
-        function closeModal() {
-            document.getElementById('data-modal').style.display = 'none';
-        }
-
-
-        // Export functionality
         function exportData() {
-            // Get your tasks and groups data
             const data = {
-                tasks: tasks, // Assuming 'tasks' is your main tasks array
-                groups: groups // Assuming 'groups' is your groups array
+                tasks: tasks,
+                groups: groups
             };
-            
-            // Set up the modal for export
-            document.getElementById('modal-title').textContent = 'Export Data';
-            document.getElementById('modal-instruction').textContent = 'Copy the JSON data below to save your tasks and groups:';
-            document.getElementById('modal-data').value = JSON.stringify(data, null, 2);
-            document.getElementById('modal-data').readOnly = true;
-            
-            // Show/hide buttons
-            document.getElementById('copy-btn').style.display = 'block';
-            document.getElementById('apply-btn').style.display = 'none';
-            
-            // Show the modal
-            document.getElementById('data-modal').style.display = 'flex';
-            
-            // Set up event listeners
-            document.getElementById('copy-btn').onclick = copyToClipboard;
-            document.getElementById('close-btn').onclick = closeModal;
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'task-tracker-backup.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
-        // Import functionality
         function importData() {
-            // Set up the modal for import
-            document.getElementById('modal-title').textContent = 'Import Data';
-            document.getElementById('modal-instruction').textContent = 'Paste your JSON data below to load your tasks and groups:';
-            document.getElementById('modal-data').value = '';
-            document.getElementById('modal-data').readOnly = false;
-            
-            // Show/hide buttons
-            document.getElementById('copy-btn').style.display = 'none';
-            document.getElementById('apply-btn').style.display = 'block';
-            
-            // Show the modal
-            document.getElementById('data-modal').style.display = 'flex';
-            
-            // Set up event listeners
-            document.getElementById('apply-btn').onclick = applyImport;
-            document.getElementById('close-btn').onclick = closeModal;
-        }
-
-        // Copy to clipboard function
-        async function copyToClipboard() {
-            try {
-                const textArea = document.getElementById('modal-data');
-                
-                // Try modern Clipboard API first
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(textArea.value);
-                    alert('Data copied to clipboard!');
-                } else {
-                    // Fallback to older method
-                    textArea.select();
-                    const success = document.execCommand('copy');
-                    if (success) {
-                        alert('Data copied to clipboard!');
-                    } else {
-                        throw new Error('Copy command failed');
-                    }
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) {
+                    return;
                 }
-            } catch (err) {
-                console.error('Failed to copy:', err);
-                alert('Could not copy automatically. Please select all text (Ctrl+A) and copy manually (Ctrl+C).');
-            }
-        }
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const contents = event.target.result;
+                    try {
+                        const importedData = JSON.parse(contents);
+                        if (importedData && importedData.tasks && Array.isArray(importedData.tasks) &&
+                            importedData.groups && Array.isArray(importedData.groups)) {
 
-        // Apply imported data
-        function applyImport() {
-            try {
-                const importData = JSON.parse(document.getElementById('modal-data').value);
-                
-                if (importData && importData.tasks && Array.isArray(importData.tasks) && 
-                    importData.groups && Array.isArray(importData.groups)) {
-                    
-                    if (confirm('This will replace your current tasks and groups. Continue?')) {
-                        // Apply imported data
-                        tasks = importData.tasks;
-                        groups = importData.groups;
-                        
-                        // Add missing properties to tasks if needed
-                        tasks.forEach(task => {
-                            if (task.completionCount === undefined) task.completionCount = 0;
-                            if (task.group === undefined) task.group = "";
-                            if (task.priority === undefined) task.priority = "none";
-                        });
-                        
-                        // Save to localStorage and update UI
-                        localStorage.setItem('rotationTasks', JSON.stringify(tasks));
-                        localStorage.setItem('taskGroups', JSON.stringify(groups));
-                        
-                        // Refresh UI (replace with your UI update functions)
-                        if (typeof populateGroupSelects === 'function') populateGroupSelects();
-                        if (typeof renderTasks === 'function') renderTasks();
-                        
-                        closeModal();
-                        alert('Data imported successfully!');
+                            if (confirm('This will replace your current tasks and groups. Continue?')) {
+                                tasks = importedData.tasks;
+                                groups = importedData.groups;
+
+                                tasks.forEach(task => {
+                                    if (task.completionCount === undefined) task.completionCount = 0;
+                                    if (task.group === undefined) task.group = "";
+                                    if (task.priority === undefined) task.priority = "none";
+                                });
+
+                                saveData();
+                                populateGroupSelects();
+                                renderTasks();
+                                alert('Data imported successfully!');
+                            }
+                        } else {
+                            alert('Invalid data format. Import failed. The data must contain both tasks and groups arrays.');
+                        }
+                    } catch (error) {
+                        alert('Error parsing JSON data: ' + error.message);
                     }
-                } else {
-                    alert('Invalid data format. Import failed. The data must contain both tasks and groups arrays.');
-                }
-            } catch (error) {
-                alert('Error parsing JSON data: ' + error.message);
-            }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
         }
-        
-
-
-
-
-
-
-
-
-
-
-
 
         // Event listeners
         addButton.addEventListener('click', addTask);
@@ -1140,13 +1104,10 @@
             if (e.target === groupsModal) {
                 closeGroupsModal();
             }
-            if (e.target === document.getElementById('data-modal')) {
-                closeModal();
-            }
         });
         
-
         // Initialize app
+        document.getElementById('today-count').textContent = todayStats.count;
         populateGroupSelects();
         renderTasks();
     </script>
